@@ -9,8 +9,9 @@
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
-#define MOTHERBOARD 1  // Adafruit Motor Shield 1
+//#define MOTHERBOARD 1  // Adafruit Motor Shield 1
 //#define MOTHERBOARD 2  // Adafruit Motor Shield 2
+#define MOTHERBOARD 3//Big easy drivers and accel stepper library
 
 // Increase this number to see more output
 #define VERBOSE         (0)
@@ -22,8 +23,17 @@
 
 
 // which motor is on which pin?
+#if MOTHERBOARD == 1 || MOTHERBOARD == 2
 #define M1_PIN          (1)
 #define M2_PIN          (2)
+#endif
+
+#if MOTHERBOARD == 3
+#define M1_PIN_1 8
+#define M1_PIN_2 9
+#define M2_PIN_1 10
+#define M2_PIN_2 11
+#endif
 
 // which limit switch is on which pin?
 #define L_PIN           (A3)
@@ -78,7 +88,7 @@
 #endif
 
 
-#if MOTHERBOARD == 1
+#if MOTHERBOARD == 1 || MOTHERBOARD == 3
 #define M1_STEP  m1.step
 #define M2_STEP  m2.step
 #define M1_ONESTEP(x)  m1.onestep(x)
@@ -117,6 +127,11 @@
 #include <Adafruit_MotorShield.h>
 #endif
 
+#if MOTHERBOARD == 3
+#include <SP_AccelStepperWrapper.h>
+#include <AccelStepper.h>
+#endif 
+
 // Default servo library
 #include <Servo.h> 
 
@@ -145,6 +160,12 @@ static AF_Stepper m2((int)STEPS_PER_TURN, M1_PIN);
 Adafruit_MotorShield AFMS0 = Adafruit_MotorShield(SHIELD_ADDRESS);
 Adafruit_StepperMotor *m1;
 Adafruit_StepperMotor *m2;
+#endif
+
+#if MOTHERBOARD == 3
+// Initialize Adafruit stepper controller
+static SP_AccelStepperWrapper m1(M1_PIN_1,M1_PIN_2);
+static SP_AccelStepperWrapper m2(M2_PIN_2,M2_PIN_2);
 #endif
 
 static Servo s1;
@@ -1057,7 +1078,10 @@ void Serial_listen() {
 //------------------------------------------------------------------------------
 void loop() {
   Serial_listen();
-  
+#if MOTHERBOARD == 3
+  m1.run();
+  m2.run();
+#endif
   // The PC will wait forever for the ready signal.
   // if Arduino hasn't received a new instruction in a while, send ready() again
   // just in case USB garbled ready and each half is waiting on the other.

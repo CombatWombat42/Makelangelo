@@ -454,7 +454,7 @@ public class Makelangelo
 	
 	// find all available serial ports for the settings->ports menu.
 	public String[] ListSerialPorts() {
-        if(System.getProperty("os.name").equals("Mac OS X")){
+        if(System.getProperty("os.name").equals("Mac OS X")||System.getProperty("os.name").equals("Linux")){
         	portsDetected = SerialPortList.getPortNames("/dev/");
             //System.out.println("OS X");
         } else {
