@@ -10,8 +10,8 @@
 // CONSTANTS
 //------------------------------------------------------------------------------
 //#define MOTHERBOARD 1  // Adafruit Motor Shield 1
-//#define MOTHERBOARD 2  // Adafruit Motor Shield 2
-#define MOTHERBOARD 3//Big easy drivers and accel stepper library
+#define MOTHERBOARD 2  // Adafruit Motor Shield 2
+//#define MOTHERBOARD 3//Big easy drivers and accel stepper library
 
 // Increase this number to see more output
 #define VERBOSE         (0)
@@ -64,7 +64,7 @@
 
 #define MAX_STEPS_S     (STEPS_PER_TURN*MAX_RPM/60.0)  // steps/s
 
-#define MAX_FEEDRATE    (200)
+#define MAX_FEEDRATE    (0.5)
 #define MIN_FEEDRATE    (0.01) // steps / second
 
 // for arc directions
