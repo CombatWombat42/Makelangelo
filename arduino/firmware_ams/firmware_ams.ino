@@ -303,7 +303,7 @@ static void setPenAngle(int pen_angle) {
     if(posz>PEN_UP_ANGLE  ) posz=PEN_UP_ANGLE;
 
     s1.write( (int)posz );
-    delay(200);
+    delay(500);
   }
 }
 
