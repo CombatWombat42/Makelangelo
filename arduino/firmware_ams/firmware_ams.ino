@@ -62,7 +62,7 @@
 #define PEN_DOWN_ANGLE  (10)  // Some servos don't like 0 degrees
 #define PEN_DELAY       (250)  // in ms
 
-#define MAX_STEPS_S     (STEPS_PER_TURN*MAX_RPM/60.0)  // steps/s
+
 
 #define MAX_FEEDRATE    (0.5)
 #define MIN_FEEDRATE    (0.01) // steps / second
@@ -86,7 +86,6 @@
 #ifndef USE_SD_CARD
 #define File int
 #endif
-
 
 #if MOTHERBOARD == 2
 #define M1_STEP  m1->step
@@ -257,16 +256,6 @@ static float atan3(float dy,float dx) {
 }
 
 
-//------------------------------------------------------------------------------
-static char readSwitches() {
-#ifdef USE_LIMIT_SWITCH
-  // get the current switch state
-  return ( (analogRead(L_PIN) < SWITCH_HALF) | (analogRead(R_PIN) < SWITCH_HALF) );
-#else
-  return 0;
-#endif  // USE_LIMIT_SWITCH
-}
-
 
 //------------------------------------------------------------------------------
 // feed rate is given in units/min and converted to cm/s
@@ -376,7 +365,6 @@ static void line(float x,float y,float z) {
       }
 //      delay(step_delay);
         delay(20);
-      if(readSwitches()) return;
     }
   } else {
     for(i=0;i<ad2;++i) {
@@ -388,7 +376,6 @@ static void line(float x,float y,float z) {
       }
 //      delay(step_delay);
         delay(20);
-      if(readSwitches()) return;
     }
   }
 
@@ -502,65 +489,8 @@ static void help() {
   Serial.println(F("M101 [Tx.xx] [Bx.xx] [Rx.xx] [Lx.xx]"));
   Serial.println(F("       - display/update board dimensions."));
   Serial.println(F("As well as the following G-codes (http://en.wikipedia.org/wiki/G-code):"));
-  Serial.println(F("G00,G01,G02,G03,G04,G28,G90,G91,G92,M18,M114"));
+  Serial.println(F("G00,G01,G02,G03,G04,G90,G91,G92,M18,M114"));
 }
-
-
-//------------------------------------------------------------------------------
-// find the current robot position and 
-static void FindHome() {
-#ifdef USE_LIMIT_SWITCH
-  Serial.println(F("Homing..."));
-  
-  if(readSwitches()) {
-    Serial.println(F("** ERROR **"));
-    Serial.println(F("Problem: Plotter is already touching switches."));
-    Serial.println(F("Solution: Please unwind the strings a bit and try again."));
-    return;
-  }
-  
-  int home_step_delay=300;
-  int safe_out=50;
-  
-  // reel in the left motor until contact is made.
-  Serial.println(F("Find left..."));
-  do {
-    M1_ONESTEP(M1_REEL_IN ); // Replaced with onestep
-    M2_ONESTEP(M2_REEL_OUT); // Replaced with onestep
-    delayMicroseconds(home_step_delay);
-  } while(!readSwitches());
-  laststep1=0;
-  
-  // back off so we don't get a false positive on the next motor
-  int i;
-  for(i=0;i<safe_out;++i) {
-    M1_ONESTEP(M1_REEL_OUT); // Replaced with onestep
-    delayMicroseconds(home_step_delay);
-  }
-  laststep1=safe_out;
-  
-  // reel in the right motor until contact is made
-  Serial.println(F("Find right..."));
-  do {
-    M1_ONESTEP(M1_REEL_OUT); // Replaced with onestep
-    M2_ONESTEP(M2_REEL_IN ); // Replaced with onestep
-    delay(200);
-    laststep1++;
-  } while(!readSwitches());
-  laststep2=0;
-  
-  // back off so we don't get a false positive that kills line()
-  for(i=0;i<safe_out;++i) {
-    M2_ONESTEP(M2_REEL_OUT); // Replaced with onestep
-    delay(200);
-  }
-  laststep2=safe_out;
-  
-  Serial.println(F("Centering..."));
-  line(0,0,posz);
-#endif // USE_LIMIT_SWITCH
-}
-
 
 //------------------------------------------------------------------------------
 static void where() {
@@ -914,7 +844,6 @@ static void processCommand() {
     strcpy(mode_name,"mm");
     printFeedRate();
     break;
-  case 28:  FindHome();  break;
   case 54:
   case 55:
   case 56:
