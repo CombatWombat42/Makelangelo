@@ -88,15 +88,11 @@
 #endif
 
 
-#if MOTHERBOARD == 1 || MOTHERBOARD == 3
-#define M1_STEP  m1.step
-#define M2_STEP  m2.step
-#define M1_ONESTEP(x)  m1.onestep(x)
-#define M2_ONESTEP(x)  m2.onestep(x)
-#endif
 #if MOTHERBOARD == 2
 #define M1_STEP  m1->step
 #define M2_STEP  m2->step
+#define M1_SPEED  m1->setSpeed
+#define M2_SPEED  m2->setSpeed
 #define M1_ONESTEP(x)  m1->onestep(x,SINGLE)
 #define M2_ONESTEP(x)  m2->onestep(x,SINGLE)
 // stacked motor shields have different addresses. The default is 0x60
@@ -160,6 +156,7 @@ static AF_Stepper m2((int)STEPS_PER_TURN, M1_PIN);
 Adafruit_MotorShield AFMS0 = Adafruit_MotorShield(SHIELD_ADDRESS);
 Adafruit_StepperMotor *m1;
 Adafruit_StepperMotor *m2;
+
 #endif
 
 #if MOTHERBOARD == 3
@@ -306,7 +303,7 @@ static void setPenAngle(int pen_angle) {
     if(posz>PEN_UP_ANGLE  ) posz=PEN_UP_ANGLE;
 
     s1.write( (int)posz );
-    delay(PEN_DELAY);
+    delay(200);
   }
 }
 
@@ -347,7 +344,7 @@ static void FK(float l1, float l2,float &x,float &y) {
 
 //------------------------------------------------------------------------------
 void pause(long ms) {
-  delay(ms/1000);
+  delay(200);
   delayMicroseconds(ms%1000);
 }
 
@@ -377,7 +374,8 @@ static void line(float x,float y,float z) {
         over-=ad1;
         M2_ONESTEP(dir2);
       }
-      delayMicroseconds(step_delay);
+//      delay(step_delay);
+        delay(20);
       if(readSwitches()) return;
     }
   } else {
@@ -388,7 +386,8 @@ static void line(float x,float y,float z) {
         over-=ad2;
         M1_ONESTEP(dir1);
       }
-      delayMicroseconds(step_delay);
+//      delay(step_delay);
+        delay(20);
       if(readSwitches()) return;
     }
   }
@@ -526,8 +525,8 @@ static void FindHome() {
   // reel in the left motor until contact is made.
   Serial.println(F("Find left..."));
   do {
-    M1_STEP(1,M1_REEL_IN );
-    M2_STEP(1,M2_REEL_OUT);
+    M1_ONESTEP(M1_REEL_IN ); // Replaced with onestep
+    M2_ONESTEP(M2_REEL_OUT); // Replaced with onestep
     delayMicroseconds(home_step_delay);
   } while(!readSwitches());
   laststep1=0;
@@ -535,7 +534,7 @@ static void FindHome() {
   // back off so we don't get a false positive on the next motor
   int i;
   for(i=0;i<safe_out;++i) {
-    M1_STEP(1,M1_REEL_OUT);
+    M1_ONESTEP(M1_REEL_OUT); // Replaced with onestep
     delayMicroseconds(home_step_delay);
   }
   laststep1=safe_out;
@@ -543,17 +542,17 @@ static void FindHome() {
   // reel in the right motor until contact is made
   Serial.println(F("Find right..."));
   do {
-    M1_STEP(1,M1_REEL_OUT);
-    M2_STEP(1,M2_REEL_IN );
-    delay(step_delay);
+    M1_ONESTEP(M1_REEL_OUT); // Replaced with onestep
+    M2_ONESTEP(M2_REEL_IN ); // Replaced with onestep
+    delay(200);
     laststep1++;
   } while(!readSwitches());
   laststep2=0;
   
   // back off so we don't get a false positive that kills line()
   for(i=0;i<safe_out;++i) {
-    M2_STEP(1,M2_REEL_OUT);
-    delay(step_delay);
+    M2_ONESTEP(M2_REEL_OUT); // Replaced with onestep
+    delay(200);
   }
   laststep2=safe_out;
   
@@ -737,8 +736,8 @@ void disable_motors() {
 
 
 void activate_motors() {
-  M1_STEP(1,1);  M1_STEP(1,-1);
-  M2_STEP(1,1);  M2_STEP(1,-1);
+  M1_ONESTEP(1);  M1_ONESTEP(-1); // Replaced with onestep
+  M2_ONESTEP(1);  M2_ONESTEP(-1); // Replaced with onestep
 }
 
 
@@ -883,7 +882,8 @@ static void processCommand() {
   case 0:
   case 1: {  // line
       Vector3 offset=get_end_plus_offset();
-      setFeedRate(parsenumber('F',feed_rate));
+//      setFeedRate(parsenumber('F',feed_rate);
+      setFeedRate(1.0);
       line_safe( parsenumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
                  parsenumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
                  parsenumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z) );
@@ -950,11 +950,11 @@ static void processCommand() {
       if(*ptr == m1d) {
         dir = amount < 0 ? M1_REEL_IN : M1_REEL_OUT;
         amount=abs(amount);
-        for(i=0;i<amount;++i) {  M1_STEP(1,dir);  delay(2);  }
+        for(i=0;i<amount;++i) {  M1_ONESTEP(dir);  delay(200);  } // Replaced with onestep
       } else if(*ptr == m2d) {
         dir = amount < 0 ? M2_REEL_IN : M2_REEL_OUT;
         amount = abs(amount);
-        for(i=0;i<amount;++i) {  M2_STEP(1,dir);  delay(2);  }
+        for(i=0;i<amount;++i) {  M2_ONESTEP(dir);  delay(200);  } // Replaced with onestep
       }
     }
     break;
@@ -1022,6 +1022,7 @@ void setup() {
   AFMS0.begin();
   m1 = AFMS0.getStepper(STEPS_PER_TURN, M2_PIN);
   m2 = AFMS0.getStepper(STEPS_PER_TURN, M1_PIN);
+  M1_SPEED(1);
 #endif
 
   // initialize the scale
